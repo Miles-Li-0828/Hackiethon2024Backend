@@ -17,7 +17,7 @@ from Game.gameSettings import (
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
 
 # TODO FOR PARTICIPANT: Set primary and secondary skill here
-PRIMARY_SKILL = DashAttackSkill
+PRIMARY_SKILL = Meditate
 SECONDARY_SKILL = SuperSaiyanSkill
 
 # constants, for easier move return
@@ -50,12 +50,15 @@ class Script:
         self.primary = PRIMARY_SKILL
         self.secondary = SECONDARY_SKILL
 
+        self.ticks = 0
+
     # DO NOT TOUCH
     def init_player_skills(self):
         return self.primary, self.secondary
 
     # MAIN FUNCTION that returns a single move to the game manager
     def get_move(self, player, enemy, player_projectiles, enemy_projectiles):
+        self.ticks += 1
         distance = abs(get_pos(player)[0] - get_pos(enemy)[0])
         # Detect my hp
         hp = get_hp(player)
@@ -63,33 +66,28 @@ class Script:
         is_e_startup = skill_cancellable(enemy)
         e_blocking_stat = get_block_status(enemy)
 
+        if not secondary_on_cooldown(player):
+            return SECONDARY
+
         # Avoid the projectile
         proj_d = 0
         if enemy_projectiles:
             proj_d = abs(get_proj_pos(enemy_projectiles[0])[0] - get_pos(player)[0])
         if proj_d and proj_d < 2:
-            return JUMP
+            return JUMP_FORWARD
 
-        # Dash attack
-        if distance == 3:
-            if get_secondary_cooldown(player) and not get_primary_cooldown(player):
-                return PRIMARY
-            elif get_secondary_cooldown(player) and get_primary_cooldown(player):
-                return HEAVY
-            return SECONDARY
-        if distance > 3 and distance < 7:
-            if get_primary_cooldown(player):
-                return FORWARD
+        if (get_hp(player) <= 80 or self.ticks > 115) and not primary_on_cooldown(
+            player
+        ):
             return PRIMARY
-        if distance >= 7:
-            if enemy_projectiles:
-                proj_d = abs(get_proj_pos(enemy_projectiles[0])[0] - get_pos(player)[0])
-            if proj_d and proj_d < 2:
-                return JUMP_FORWARD
-            return FORWARD
 
-        # If cool down
+        # attacking
         if distance < 3:
-            return LIGHT
+            if distance < 2:
+                if get_stun_duration(enemy):
+                    if not heavy_on_cooldown(player):
+                        return HEAVY
+                    return LIGHT
+                return LIGHT
 
         return FORWARD

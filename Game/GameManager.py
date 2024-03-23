@@ -23,8 +23,8 @@ from Game.PlayerConfigs import Player_Controller
 
 # Manually choose bot files to test
 SUBMISSIONPATH = "Submissions"
-PATH1 = "Terminator"
-PATH2 = "Bot1"
+PATH1 = "Medicate"
+PATH2 = "LOL"
 
 
 # Get scripts from bot files and return as script objects

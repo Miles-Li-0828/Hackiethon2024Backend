@@ -12,12 +12,14 @@ from Game.gameSettings import (
     PARRYSTUN,
 )
 
+import random
+
 
 # PRIMARY CAN BE: Teleport, Super Saiyan, Meditate, Dash Attack, Uppercut, One Punch
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
 
 # TODO FOR PARTICIPANT: Set primary and secondary skill here
-PRIMARY_SKILL = Meditate
+PRIMARY_SKILL = UppercutSkill
 SECONDARY_SKILL = SuperSaiyanSkill
 
 # constants, for easier move return
@@ -57,39 +59,20 @@ class Script:
     # MAIN FUNCTION that returns a single move to the game manager
     def get_move(self, player, enemy, player_projectiles, enemy_projectiles):
         distance = abs(get_pos(player)[0] - get_pos(enemy)[0])
-        # Detect my hp
-        hp = get_hp(player)
-        hp_enermy = get_hp(enemy)
-        is_e_startup = skill_cancellable(enemy)
-        e_blocking_stat = get_block_status(enemy)
 
-        # Avoid the projectile
+        # Avoid the projectile (if it exists)
         proj_d = 0
         if enemy_projectiles:
             proj_d = abs(get_proj_pos(enemy_projectiles[0])[0] - get_pos(player)[0])
         if proj_d and proj_d < 2:
             return JUMP
 
-        # Dash attack
-        if distance == 3:
-            if get_secondary_cooldown(player) and not get_primary_cooldown(player):
-                return PRIMARY
-            elif get_secondary_cooldown(player) and get_primary_cooldown(player):
-                return HEAVY
+        # Uppercut
+        if not secondary_on_cooldown(player):
             return SECONDARY
-        if distance > 3 and distance < 7:
-            if get_primary_cooldown(player):
-                return FORWARD
+        if not primary_on_cooldown(player):
             return PRIMARY
-        if distance >= 7:
-            if enemy_projectiles:
-                proj_d = abs(get_proj_pos(enemy_projectiles[0])[0] - get_pos(player)[0])
-            if proj_d and proj_d < 2:
-                return JUMP_FORWARD
-            return FORWARD
-
-        # If cool down
-        if distance < 3:
-            return LIGHT
-
-        return FORWARD
+        if not heavy_on_cooldown(player):
+            return HEAVY
+        else:
+            return random.choice([LIGHT, JUMP_BACKWARD])

@@ -3,15 +3,7 @@ from Game.Skills import *
 from Game.projectiles import *
 from ScriptingHelp.usefulFunctions import *
 from Game.playerActions import defense_actions, attack_actions, projectile_actions
-from Game.gameSettings import (
-    HP,
-    LEFTBORDER,
-    RIGHTBORDER,
-    LEFTSTART,
-    RIGHTSTART,
-    PARRYSTUN,
-)
-
+from Game.gameSettings import HP, LEFTBORDER, RIGHTBORDER, LEFTSTART, RIGHTSTART, PARRYSTUN
 
 # PRIMARY CAN BE: Teleport, Super Saiyan, Meditate, Dash Attack, Uppercut, One Punch
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
@@ -40,7 +32,7 @@ CANCEL = ("skill_cancel",)
 # no move, aka no input
 NOMOVE = "NoMove"
 # for testing
-moves = (SECONDARY,)
+moves = SECONDARY,
 moves_iter = iter(moves)
 
 
@@ -50,46 +42,39 @@ class Script:
         self.primary = PRIMARY_SKILL
         self.secondary = SECONDARY_SKILL
 
+        self.time = 0
+
     # DO NOT TOUCH
     def init_player_skills(self):
         return self.primary, self.secondary
 
     # MAIN FUNCTION that returns a single move to the game manager
     def get_move(self, player, enemy, player_projectiles, enemy_projectiles):
+        self.time += 1
         distance = abs(get_pos(player)[0] - get_pos(enemy)[0])
-        # Detect my hp
-        hp = get_hp(player)
-        hp_enermy = get_hp(enemy)
-        is_e_startup = skill_cancellable(enemy)
-        e_blocking_stat = get_block_status(enemy)
 
-        # Avoid the projectile
-        proj_d = 0
+        if not secondary_on_cooldown(player):
+            return SECONDARY  # always using super sai ya
+
         if enemy_projectiles:
-            proj_d = abs(get_proj_pos(enemy_projectiles[0])[0] - get_pos(player)[0])
-        if proj_d and proj_d < 2:
-            return JUMP
-
-        # Dash attack
-        if distance == 3:
-            if get_secondary_cooldown(player) and not get_primary_cooldown(player):
-                return PRIMARY
-            elif get_secondary_cooldown(player) and get_primary_cooldown(player):
-                return HEAVY
-            return SECONDARY
-        if distance > 3 and distance < 7:
-            if get_primary_cooldown(player):
-                return FORWARD
-            return PRIMARY
-        if distance >= 7:
-            if enemy_projectiles:
-                proj_d = abs(get_proj_pos(enemy_projectiles[0])[0] - get_pos(player)[0])
-            if proj_d and proj_d < 2:
+            proj_dist = abs(get_pos(player)[0] - get_proj_pos(enemy_projectiles[0])[0])
+            if proj_dist < 2:
                 return JUMP_FORWARD
-            return FORWARD
 
-        # If cool down
-        if distance < 3:
-            return LIGHT
+        if (get_hp(player) <= 80 or self.time > 115) and not primary_on_cooldown(player):
+            return PRIMARY
+
+        if distance < 2:
+            if get_stun_duration(enemy):
+                return self._attack(player)
+            if get_past_move(enemy, 1)[0] == "light" and get_past_move(enemy, 2)[0] == "light":
+                return BLOCK
+            return self._attack(player)
 
         return FORWARD
+
+    def _attack(self, player):
+        if (get_past_move(player, 1)[0] == "light" and get_past_move(player, 2)[0] == "light"
+                and not heavy_on_cooldown(player)):
+            return HEAVY
+        return LIGHT
