@@ -23,7 +23,7 @@ from Game.PlayerConfigs import Player_Controller
 
 # Manually choose bot files to test
 SUBMISSIONPATH = "Submissions"
-PATH1 = "Butt"
+PATH1 = "Terminator"
 PATH2 = "Bot1"
 
 

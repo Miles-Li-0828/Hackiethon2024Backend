@@ -16,8 +16,8 @@ from Game.gameSettings import (
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
 
 # TODO FOR PARTICIPANT: Set primary and secondary skill here
-PRIMARY_SKILL = UppercutSkill
-SECONDARY_SKILL = Boomerang
+PRIMARY_SKILL = TeleportSkill
+SECONDARY_SKILL = Hadoken
 
 # constants, for easier move return
 # movements
@@ -55,12 +55,34 @@ class Script:
     # MAIN FUNCTION that returns a single move to the game manager
     def get_move(self, player, enemy, player_projectiles, enemy_projectiles):
         distance = abs(get_pos(player)[0] - get_pos(enemy)[0])
-        hp = get_
-        if distance > 3:
-            return SECONDARY
-        if distance == 3:
-            return PRIMARY
-        else:
-            return LIGHT
+        # Detect my hp
+        hp = get_hp(player)
+        hp_enermy = get_hp(enemy)
+        is_e_startup = skill_cancellable(enemy)
+        e_blocking_stat = get_block_status(enemy)
 
-        return FORWARD
+        # Avoid the projectile
+        proj_d = 0
+        if enemy_projectiles:
+            proj_d = abs(get_proj_pos(enemy_projectiles[0])[0] - get_pos(player)[0])
+        if proj_d and proj_d < 2:
+            return JUMP
+
+        # Check distacne and make movements
+        if distance < 3:
+            if is_e_startup:
+                return HEAVY
+            else:
+                return LIGHT
+
+        # Check if enemy is blocked
+        # 看我们的技能
+        if e_blocking_stat:
+            if distance > 3 and distance < 7:
+                return SECONDARY
+            elif distance < 3:
+                return BACK
+            elif distance >= 7:
+                return FORWARD
+
+        return BACK
