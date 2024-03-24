@@ -23,7 +23,7 @@ from Game.PlayerConfigs import Player_Controller
 
 # Manually choose bot files to test
 SUBMISSIONPATH = "Submissions"
-PATH1 = "Medicate"
+PATH1 = "goko"
 PATH2 = "LOL"
 
 

@@ -19,7 +19,7 @@ import random
 # SECONDARY CAN BE : Hadoken, Grenade, Boomerang, Bear Trap
 
 # TODO FOR PARTICIPANT: Set primary and secondary skill here
-PRIMARY_SKILL = UppercutSkill
+PRIMARY_SKILL = Meditate
 SECONDARY_SKILL = SuperSaiyanSkill
 
 # constants, for easier move return
@@ -51,6 +51,7 @@ class Script:
     def __init__(self):
         self.primary = PRIMARY_SKILL
         self.secondary = SECONDARY_SKILL
+        self.ticks = 0
 
     # DO NOT TOUCH
     def init_player_skills(self):
@@ -58,6 +59,7 @@ class Script:
 
     # MAIN FUNCTION that returns a single move to the game manager
     def get_move(self, player, enemy, player_projectiles, enemy_projectiles):
+        self.ticks += 1
         distance = abs(get_pos(player)[0] - get_pos(enemy)[0])
 
         # Avoid the projectile (if it exists)
@@ -65,14 +67,22 @@ class Script:
         if enemy_projectiles:
             proj_d = abs(get_proj_pos(enemy_projectiles[0])[0] - get_pos(player)[0])
         if proj_d and proj_d < 2:
-            return JUMP
+            return JUMP_FORWARD
+
+        if (get_hp(player) <= 80 or self.ticks >= 115) and not primary_on_cooldown(
+            player
+        ):
+            return PRIMARY
 
         # Uppercut
+        if distance > 3:
+            return random.choice([FORWARD])
+
         if not secondary_on_cooldown(player):
             return SECONDARY
-        if not primary_on_cooldown(player):
-            return PRIMARY
         if not heavy_on_cooldown(player):
             return HEAVY
+        if distance <= 3:
+            return random.choice([LIGHT, JUMP_BACKWARD, JUMP_FORWARD, BLOCK])
         else:
-            return random.choice([LIGHT, JUMP_BACKWARD])
+            return random.choice([LIGHT, JUMP_BACKWARD, JUMP_FORWARD])
